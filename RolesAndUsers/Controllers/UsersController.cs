@@ -2,81 +2,75 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RolesAndUsers.Data;
+using RolesAndUsers.Dtos;
 using RolesAndUsers.Models;
+using RolesAndUsers.Repositories;
 
 namespace RolesAndUsers.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
+    [Produces("application/json")]
     public class UsersController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
-        public UsersController(ApplicationDbContext context)
+        private readonly IUserRepository _userRepository;
+
+        public UsersController(IMapper mappper, IUserRepository userRepository)
         {
-            _context = context;
+            _mapper = mappper;
+            _userRepository = userRepository;
         }
 
         // GET: api/Users
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<IActionResult> GetUsers()
         {
-          if (_context.Users == null)
-          {
-              return NotFound();
-          }
-            return await _context.Users.ToListAsync();
+            IEnumerable<User> users = await _userRepository.GetUsers();
+
+            return Ok(_mapper.Map<List<UserDto>>(users));
         }
 
         // GET: api/Users/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(Guid id)
+        public async Task<ActionResult<UserDto>> GetUser(Guid id)
         {
-          if (_context.Users == null)
-          {
-              return NotFound();
-          }
-            var user = await _context.Users.Include(b => b.Roles).FirstOrDefaultAsync(i => i.Id == id);
+            var user = await _userRepository.GetUser(id);
 
             if (user == null)
             {
                 return NotFound();
             }
 
-            return user;
+            var userDto = _mapper.Map<UserDto>(user);
+
+            return userDto;
         }
 
         // PUT: api/Users/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(Guid id, User user)
+        public async Task<IActionResult> PutUser(Guid id, [FromBody] UserDto userDto)
         {
-            if (id != user.Id)
+            if (id != userDto.Id)
             {
-                return BadRequest();
+                return BadRequest("User ID mismatch");
             }
 
-            _context.Entry(user).State = EntityState.Modified;
+            var user = _mapper.Map<User>(userDto);
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UserExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            var userToUpdate = await _userRepository.GetUser(id);
+
+            if (userToUpdate == null)
+                return NotFound($"User with Id = {id} not found");
+
+            await _userRepository.UpdateUser(user);
 
             return NoContent();
         }
@@ -84,41 +78,42 @@ namespace RolesAndUsers.Controllers
         // POST: api/Users
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<User>> PostUser(User user)
+        public async Task<ActionResult<User>> PostUser(UserDto userDto)
         {
-          if (_context.Users == null)
-          {
-              return Problem("Entity set 'ApplicationDbContext.Users'  is null.");
-          }
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            try
+            {
+                if (userDto == null)
+                {
+                    return BadRequest();
+                }
 
-            return CreatedAtAction("GetUser", new { id = user.Id }, user);
+                var user = _mapper.Map<User>(userDto);
+
+                var createdEmployee = await _userRepository.AddUser(user);
+
+                return CreatedAtAction("GetUser", new { id = user.Id }, user);
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    "Error creating new user record");
+            }
         }
 
         // DELETE: api/Users/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(Guid id)
         {
-            if (_context.Users == null)
-            {
-                return NotFound();
-            }
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userRepository.GetUser(id);
+
             if (user == null)
             {
                 return NotFound();
             }
 
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            await _userRepository.DeleteUser(id);
 
             return NoContent();
-        }
-
-        private bool UserExists(Guid id)
-        {
-            return (_context.Users?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RolesAndUsers.Data;
+using RolesAndUsers.Dtos;
 using RolesAndUsers.Models;
+using RolesAndUsers.Repositories;
 
 namespace RolesAndUsers.Controllers
 {
@@ -14,69 +17,59 @@ namespace RolesAndUsers.Controllers
     [ApiController]
     public class RolesController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
+        private readonly IRoleRepository _roleRepository;
 
-        public RolesController(ApplicationDbContext context)
+        public RolesController(IMapper mapper, IRoleRepository roleRepository)
         {
-            _context = context;
+            _mapper = mapper;
+            _roleRepository = roleRepository;
         }
 
         // GET: api/Roles
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Role>>> GetRoles()
+        public async Task<ActionResult<IEnumerable<RoleDto>>> GetRoles()
         {
-          if (_context.Roles == null)
-          {
-              return NotFound();
-          }
-            return await _context.Roles.ToListAsync();
+            var roles = await _roleRepository.GetRoles();
+
+            return Ok(_mapper.Map<List<RoleDto>>(roles));
         }
 
         // GET: api/Roles/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Role>> GetRole(Guid id)
+        public async Task<ActionResult<RoleDto>> GetRole(Guid id)
         {
-          if (_context.Roles == null)
-          {
-              return NotFound();
-          }
-            var role = await _context.Roles.FindAsync(id);
+            var role = await _roleRepository.GetRole(id);
 
             if (role == null)
             {
                 return NotFound();
             }
 
-            return role;
+            var roleDto = _mapper.Map<RoleDto>(role);
+
+            return roleDto;
         }
 
         // PUT: api/Roles/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutRole(Guid id, Role role)
+        public async Task<IActionResult> PutRole(Guid id, [FromBody] RoleDto roleDto)
         {
-            if (id != role.Id)
+            if (id != roleDto.Id)
             {
-                return BadRequest();
+                return BadRequest("Role ID mismatch");
             }
 
-            _context.Entry(role).State = EntityState.Modified;
+            var role = _mapper.Map<Role>(roleDto);
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!RoleExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            var roleToUpdate = await _roleRepository.GetRole(id);
+
+            if (roleToUpdate == null)
+                return NotFound($"Role with Id = {id} not found");
+
+            await _roleRepository.UpdateRole(role);
+
 
             return NoContent();
         }
@@ -84,41 +77,41 @@ namespace RolesAndUsers.Controllers
         // POST: api/Roles
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Role>> PostRole(Role role)
+        public async Task<ActionResult<Role>> PostRole(RoleDto roleDto)
         {
-          if (_context.Roles == null)
-          {
-              return Problem("Entity set 'ApplicationDbContext.Roles'  is null.");
-          }
-            _context.Roles.Add(role);
-            await _context.SaveChangesAsync();
+            try
+            {
+                if (roleDto == null)
+                {
+                    return BadRequest();
+                }
 
-            return CreatedAtAction("GetRole", new { id = role.Id }, role);
+                var role = _mapper.Map<Role>(roleDto);
+                var createdRole = await _roleRepository.AddRole(role);
+
+                return CreatedAtAction("GetRole", new { id = createdRole.Id }, createdRole);
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    "Error creating new role record");
+            }
         }
 
         // DELETE: api/Roles/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRole(Guid id)
         {
-            if (_context.Roles == null)
-            {
-                return NotFound();
-            }
-            var role = await _context.Roles.FindAsync(id);
+            var role = await _roleRepository.GetRole(id);
+
             if (role == null)
             {
                 return NotFound();
             }
 
-            _context.Roles.Remove(role);
-            await _context.SaveChangesAsync();
+            await _roleRepository.DeleterRole(id);
 
             return NoContent();
-        }
-
-        private bool RoleExists(Guid id)
-        {
-            return (_context.Roles?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }
