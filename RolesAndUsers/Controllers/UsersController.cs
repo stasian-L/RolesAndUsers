@@ -89,9 +89,9 @@ namespace RolesAndUsers.Controllers
 
                 var user = _mapper.Map<User>(userDto);
 
-                var createdEmployee = await _userRepository.AddUser(user);
+                var createdUser = await _userRepository.AddUser(user);
 
-                return CreatedAtAction("GetUser", new { id = user.Id }, user);
+                return CreatedAtAction("GetUser", new { id = createdUser.Id }, createdUser);
             }
             catch (Exception)
             {
