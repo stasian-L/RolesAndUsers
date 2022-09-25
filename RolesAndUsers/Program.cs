@@ -44,8 +44,6 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-//app.UseCors(options => options.WithOrigins("http://localhost:4200").AllowAnyMethod()); 
-
 app.UseCors(builder => builder
               .AllowAnyHeader()
               .AllowAnyMethod()
@@ -64,6 +62,6 @@ app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapControllers();   
 
 app.Run();

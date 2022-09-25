@@ -16,7 +16,7 @@ namespace RolesAndUsers.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             // Define relationship between books and authors
-            builder.Entity<UserRole>().Ignore(x=>x.Role)
+            builder.Entity<UserRole>()
          .HasKey(ur => new { ur.UserId, ur.RoleId });
             builder.Entity<UserRole>()
                 .HasOne(ur => ur.User)

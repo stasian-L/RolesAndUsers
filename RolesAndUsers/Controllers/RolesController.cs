@@ -80,7 +80,7 @@ namespace RolesAndUsers.Controllers
         public async Task<ActionResult<Role>> PostRole(RoleDto roleDto)
         {
             try
-            {
+            { 
                 if (roleDto == null)
                 {
                     return BadRequest();

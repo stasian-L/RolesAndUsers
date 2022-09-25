@@ -21,13 +21,11 @@ namespace RolesAndUsers.Profiles
                     }
                 });
 
-            CreateMap<RoleDto, UserRole>().ForMember(dest => dest.Role, src => src.MapFrom(src => src)).ForMember(dest => dest.RoleId, src => src.MapFrom(src => src.Id))/*.AfterMap((model, entity) =>
-            {
-                entity.RoleId = model.Id;
-            })*/;
+            CreateMap<RoleDto, UserRole>().ForMember(dest => dest.Role, src => src.MapFrom(src => src))
+                .ForMember(dest => dest.RoleId, src => src.MapFrom(src => src.Id));
 
-            CreateMap<Role, RoleDto>()/*.ForMember(dest => dest.Name, src => src.MapFrom(src => src.Name))
-                .ForMember(dest => dest.Id, src => src.MapFrom(src => src.Id))*/.ReverseMap();
+            CreateMap<Role, RoleDto>().ForSourceMember(x => x.UserRoles, y => y.DoNotValidate()).ForMember(dest => dest.Name, src => src.MapFrom(src => src.Name))
+                .ForMember(dest => dest.Id, src => src.MapFrom(src => src.Id)).ReverseMap();
         }
     }
 }
