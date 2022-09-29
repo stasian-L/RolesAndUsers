@@ -5,19 +5,15 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using RolesAndUsers.Repositories;
+using RolesAndUsers.Services;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>
-{
-    options.AddPolicy(name: MyAllowSpecificOrigins,
-                      policy =>
-                      {
-                          policy.WithOrigins("*");
-                      });
-});
+    options.AddPolicy(name: MyAllowSpecificOrigins, policy =>policy.WithOrigins("*"))
+);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -31,6 +27,9 @@ builder.Services.AddControllers().AddNewtonsoftJson(options =>
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 
+builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IUserService, UserService>();
+
 //For cofiguring AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddControllersWithViews();
@@ -38,7 +37,7 @@ builder.Services.AddControllersWithViews();
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

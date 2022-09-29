@@ -10,6 +10,7 @@ using RolesAndUsers.Data;
 using RolesAndUsers.Dtos;
 using RolesAndUsers.Models;
 using RolesAndUsers.Repositories;
+using RolesAndUsers.Services;
 
 namespace RolesAndUsers.Controllers
 {
@@ -17,38 +18,25 @@ namespace RolesAndUsers.Controllers
     [ApiController]
     public class RolesController : ControllerBase
     {
-        private readonly IMapper _mapper;
-        private readonly IRoleRepository _roleRepository;
+        private readonly IRoleService _roleService;
 
-        public RolesController(IMapper mapper, IRoleRepository roleRepository)
+        public RolesController(IRoleService roleService)
         {
-            _mapper = mapper;
-            _roleRepository = roleRepository;
+            _roleService = roleService;
         }
 
         // GET: api/Roles
         [HttpGet]
         public async Task<ActionResult<IEnumerable<RoleDto>>> GetRoles()
         {
-            var roles = await _roleRepository.GetRoles();
-
-            return Ok(_mapper.Map<List<RoleDto>>(roles));
+            return Ok(await _roleService.GetRoles());
         }
 
         // GET: api/Roles/5
         [HttpGet("{id}")]
         public async Task<ActionResult<RoleDto>> GetRole(Guid id)
         {
-            var role = await _roleRepository.GetRole(id);
-
-            if (role == null)
-            {
-                return NotFound();
-            }
-
-            var roleDto = _mapper.Map<RoleDto>(role);
-
-            return roleDto;
+            return await _roleService.GetRole(id);
         }
 
         // PUT: api/Roles/5
@@ -56,20 +44,7 @@ namespace RolesAndUsers.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutRole(Guid id, [FromBody] RoleDto roleDto)
         {
-            if (id != roleDto.Id)
-            {
-                return BadRequest("Role ID mismatch");
-            }
-
-            var role = _mapper.Map<Role>(roleDto);
-
-            var roleToUpdate = await _roleRepository.GetRole(id);
-
-            if (roleToUpdate == null)
-                return NotFound($"Role with Id = {id} not found");
-
-            await _roleRepository.UpdateRole(role);
-
+            await _roleService.UpdateRole(id, roleDto);
 
             return NoContent();
         }
@@ -81,13 +56,7 @@ namespace RolesAndUsers.Controllers
         {
             try
             { 
-                if (roleDto == null)
-                {
-                    return BadRequest();
-                }
-
-                var role = _mapper.Map<Role>(roleDto);
-                var createdRole = await _roleRepository.AddRole(role);
+                var createdRole = await _roleService.AddRole(roleDto);
 
                 return CreatedAtAction("GetRole", new { id = createdRole.Id }, createdRole);
             }
@@ -102,14 +71,7 @@ namespace RolesAndUsers.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRole(Guid id)
         {
-            var role = await _roleRepository.GetRole(id);
-
-            if (role == null)
-            {
-                return NotFound();
-            }
-
-            await _roleRepository.DeleterRole(id);
+            await _roleService.DeleterRole(id);
 
             return NoContent();
         }

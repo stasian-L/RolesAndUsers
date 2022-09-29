@@ -21,7 +21,7 @@ public class RoleRepository : IRoleRepository
         return result.Entity;
     }
 
-    public async Task DeleterRole(Guid roleId)
+    public async Task DeleteRole(Guid roleId)
     {
         var role = await _context.Roles.FindAsync(roleId);
 

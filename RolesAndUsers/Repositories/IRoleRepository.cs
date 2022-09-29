@@ -8,5 +8,5 @@ public interface IRoleRepository
     Task<Role> GetRole(Guid roleId);
     Task<Role> AddRole(Role role);
     Task<Role> UpdateRole(Role role);
-    Task DeleterRole(Guid roleId);
+    Task DeleteRole(Guid roleId);
 }
