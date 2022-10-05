@@ -16,15 +16,18 @@ public class UserRepository : IUserRepository
     public async Task<User> AddUser(User user)
     {
         var roles = _context.Roles
-            .Where(x => user.UserRoles
-            .Select(x => x.RoleId).Contains(x.Id))
+            .Where(x => user.Roles
+            .Select(x => x.Id).Contains(x.Id))
             .ToList();
 
-        user.UserRoles = roles
-            .Select(x => new UserRole { Role = x, RoleId = x.Id })
-            .ToList();
+        User newUser = new User
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Roles = roles,
+        };
 
-        var result = await _context.Users.AddAsync(user);
+        var result = await _context.Users.AddAsync(newUser);
         await _context.SaveChangesAsync();
 
         return result.Entity;
@@ -44,29 +47,42 @@ public class UserRepository : IUserRepository
     public async Task<User> GetUser(Guid userId)
     {
         return await _context.Users
-            .Include(b => b.UserRoles)
-            .ThenInclude(u => u.Role)
+            .Include(b => b.Roles)
             .FirstOrDefaultAsync(i => i.Id == userId);
     }
 
     public async Task<IEnumerable<User>> GetUsers()
     {
-        return await _context.Users.Include(u => u.UserRoles).ThenInclude(u => u.Role).ToListAsync();
+        return await _context.Users.Include(u => u.Roles).ToListAsync();
     }
 
     public async Task<User> UpdateUser(User user)
     {
-        var result = await _context.Users
+        var result = await _context.Users.Include(x => x.Roles)
                 .FirstOrDefaultAsync(e => e.Id == user.Id);
 
-        var roles = _context.Roles.Where(x => user.UserRoles.Select(x => x.RoleId).Contains(x.Id)).ToList();
-
-        if (result != null)
+        if(result != null)
         {
             result.Name = user.Name;
-            result.UserRoles = roles
-                .Select(x => new UserRole { Role = x, RoleId = x.Id, User = user, UserId = user.Id })
-                .ToList();
+            _context.Entry(result).CurrentValues.SetValues(user);
+
+            var _roles = result.Roles.ToList();
+            // Adds new Users
+            foreach (var role in user.Roles)
+            {
+                if (_roles.All(i => i.Id != role.Id))
+                {
+                    result.Roles.Add(role);
+                }
+            }
+            // Removes old Users
+            foreach (var role in _roles)
+            {
+                if (user.Roles.FirstOrDefault(tu => tu.Id == role.Id) == null)
+                {
+                    result.Roles.Remove(role);
+                }
+            }
 
             await _context.SaveChangesAsync();
 
@@ -74,5 +90,14 @@ public class UserRepository : IUserRepository
         }
 
         return null;
+    }
+
+    private bool IsDetached(User entity)
+    {
+        var localEntity = _context.Users?.FirstOrDefault(x => Equals(x.Id, entity.Id));
+        if (localEntity != null) // entity stored in local
+            return false;
+
+        return _context.Entry(entity).State == EntityState.Detached;
     }
 }

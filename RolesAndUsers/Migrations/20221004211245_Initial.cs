@@ -5,21 +5,33 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace RolesAndUsers.Migrations
 {
-    public partial class AddManyToManyRalationship : Migration
+    public partial class Initial : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Roles_Users_UserId",
-                table: "Roles");
+            migrationBuilder.CreateTable(
+                name: "Roles",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Roles", x => x.Id);
+                });
 
-            migrationBuilder.DropIndex(
-                name: "IX_Roles_UserId",
-                table: "Roles");
-
-            migrationBuilder.DropColumn(
-                name: "UserId",
-                table: "Roles");
+            migrationBuilder.CreateTable(
+                name: "Users",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Users", x => x.Id);
+                });
 
             migrationBuilder.CreateTable(
                 name: "RoleUser",
@@ -56,23 +68,11 @@ namespace RolesAndUsers.Migrations
             migrationBuilder.DropTable(
                 name: "RoleUser");
 
-            migrationBuilder.AddColumn<Guid>(
-                name: "UserId",
-                table: "Roles",
-                type: "uniqueidentifier",
-                nullable: true);
+            migrationBuilder.DropTable(
+                name: "Roles");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Roles_UserId",
-                table: "Roles",
-                column: "UserId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Roles_Users_UserId",
-                table: "Roles",
-                column: "UserId",
-                principalTable: "Users",
-                principalColumn: "Id");
+            migrationBuilder.DropTable(
+                name: "Users");
         }
     }
 }

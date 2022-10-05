@@ -8,16 +8,11 @@ namespace RolesAndUsers.Profiles
     {
         public UserProfile()
         {
-            CreateMap<User, UserDto>()
-                .ForMember(dest => dest.Roles, src => src.MapFrom(src => src.UserRoles.Select(x => new RoleDto { Id = x.RoleId,Name = x.Role.Name})));
+            CreateMap<User, UserDto>().ReverseMap();
 
-            CreateMap<UserDto, User>()
-                .ForMember(dest => dest.UserRoles, src => src.MapFrom(src => src.Roles));
+            /*CreateMap<UserDto, User>();*/
 
-            CreateMap<RoleDto, UserRole>().ForMember(dest => dest.Role, src => src.MapFrom(src => src))
-                .ForMember(dest => dest.RoleId, src => src.MapFrom(src => src.Id));
-
-            CreateMap<Role, RoleDto>().ForSourceMember(x => x.UserRoles, y => y.DoNotValidate()).ReverseMap();
+            CreateMap<Role, RoleDto>().ReverseMap();
         }
     }
 }

@@ -11,24 +11,11 @@ namespace RolesAndUsers.Data
 
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
-        public DbSet<UserRole> UserRoles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            // Define relationship between books and authors
-            builder.Entity<UserRole>()
-         .HasKey(ur => new { ur.UserId, ur.RoleId });
-            builder.Entity<UserRole>()
-                .HasOne(ur => ur.User)
-                .WithMany(u => u.UserRoles)
-                .HasForeignKey(ur => ur.UserId);
-            builder.Entity<UserRole>()
-                .HasOne(bc => bc.Role)
-                .WithMany(c => c.UserRoles)
-                .HasForeignKey(bc => bc.RoleId);
-
-
-
+           builder.Entity<User>()
+                .HasMany(u => u.Roles).WithMany(r=>r.Users).UsingEntity(j=>j.ToTable("RoleUser"));
         }
     }
 }
