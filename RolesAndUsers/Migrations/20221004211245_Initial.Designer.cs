@@ -12,8 +12,8 @@ using RolesAndUsers.Data;
 namespace RolesAndUsers.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20220903163648_AddManyToManyRalationshipV2")]
-    partial class AddManyToManyRalationshipV2
+    [Migration("20221004211245_Initial")]
+    partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -54,48 +54,34 @@ namespace RolesAndUsers.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("RolesAndUsers.Models.UserRole", b =>
+            modelBuilder.Entity("RoleUser", b =>
                 {
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("RolesId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("RoleId")
+                    b.Property<Guid>("UsersId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("UserId", "RoleId");
+                    b.HasKey("RolesId", "UsersId");
 
-                    b.HasIndex("RoleId");
+                    b.HasIndex("UsersId");
 
-                    b.ToTable("UserRoles");
+                    b.ToTable("RoleUser", (string)null);
                 });
 
-            modelBuilder.Entity("RolesAndUsers.Models.UserRole", b =>
+            modelBuilder.Entity("RoleUser", b =>
                 {
-                    b.HasOne("RolesAndUsers.Models.Role", "Role")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("RoleId")
+                    b.HasOne("RolesAndUsers.Models.Role", null)
+                        .WithMany()
+                        .HasForeignKey("RolesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("RolesAndUsers.Models.User", "User")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("UserId")
+                    b.HasOne("RolesAndUsers.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UsersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Role");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("RolesAndUsers.Models.Role", b =>
-                {
-                    b.Navigation("UserRoles");
-                });
-
-            modelBuilder.Entity("RolesAndUsers.Models.User", b =>
-                {
-                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }
