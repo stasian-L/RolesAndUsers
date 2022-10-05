@@ -91,13 +91,4 @@ public class UserRepository : IUserRepository
 
         return null;
     }
-
-    private bool IsDetached(User entity)
-    {
-        var localEntity = _context.Users?.FirstOrDefault(x => Equals(x.Id, entity.Id));
-        if (localEntity != null) // entity stored in local
-            return false;
-
-        return _context.Entry(entity).State == EntityState.Detached;
-    }
 }
